@@ -27,50 +27,51 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
 
-    // 🔐 Security Filter Chain
+    // 🔐 Security Configuration
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> {})   // Enable CORS
+            .cors(cors -> {})   // Enable CORS
 
-                .authorizeHttpRequests(auth -> auth
-                        // 🔥 IMPORTANT: Allow preflight requests
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .authorizeHttpRequests(auth -> auth
+                // 🔥 Allow preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Allow auth APIs
-                        .requestMatchers("/api/auth/**").permitAll()
+                // Public auth APIs
+                .requestMatchers("/api/auth/**").permitAll()
 
-                        // Secure other APIs
-                        .anyRequest().authenticated()
-                )
+                // Secure other APIs
+                .anyRequest().authenticated()
+            )
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-                .formLogin(form -> form.disable())
+            .formLogin(form -> form.disable())
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // 🌍 CORS Configuration
+    // 🌍 CORS Configuration (Permanent Fix)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://react-auth-system-kappa.vercel.app"
+        // 🔥 Use allowedOriginPatterns instead of allowedOrigins
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:5173",
+            "https://*.vercel.app"
         ));
 
         configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+            "GET", "POST", "PUT", "DELETE", "OPTIONS"
         ));
 
         configuration.setAllowedHeaders(List.of("*"));
@@ -78,7 +79,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+            new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
 
